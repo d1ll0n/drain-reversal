@@ -19,7 +19,9 @@ If we were to return ETH to the Uniswap pairs and restore their balances, people
 
 Instead of allowing this, we should simply provide a mechanism for people to transfer their LP tokens to a contract in order to reclaim the underlying ETH and index tokens.
 
-We thus need two contracts.
+Additionally, the DEFI5 and CC10 pools have a lot of overlap in their assets. Rather than have the treasury directly transfer each token to the appropriate pools, it makes sense to have an intermediate contract handle that.
+
+We thus need three contracts.
 
 **Index Pool**
 
@@ -38,6 +40,20 @@ No contracts other than staking pools hold more than a thousandth of an LP token
 - Executes transferFrom of LP tokens from caller to null address.
   - Burns underlying index tokens owed to caller
 
+**Token Distributor**
+
+- Receives all the ERC20 tokens to be transferred from the treasury.
+- Transfers the appropriate amount of each asset to the index pools.
+- Transfers WETH to the LP Burn contract.
+- Initializes the index pools.
+
+## Proposal
+
+We will need two proposals to reverse the drain.
+
+Proposal #1 will transfer 10 of the 14 assets to the token redistributor.
+
+Proposal #2 will transfer the other 4 assets to the token redistributor, then update the core and sigma index pool implementations to the two fallthrough contracts, then call the `restoreBalances()` function on the token redistributor. 
 
 ## Scripts
 
