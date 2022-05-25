@@ -69,6 +69,9 @@ describe("Drain Reversal", () => {
     await sendEtherTo(treasury);
     await sendEtherTo("0xc46e0e7ecb3efcc417f6f89b940ffaff72556382");
     treasurySigner = await impersonate(treasury);
+    await sendEtherTo(UNISWAP_PAIRS.defi5)
+    await sendEtherTo(UNISWAP_PAIRS.cc10)
+    await sendEtherTo(UNISWAP_PAIRS.fff)
   });
 
   const testTokenBalances = (token: string, name: keyof typeof HOLDERS) =>
@@ -420,6 +423,36 @@ describe("Drain Reversal", () => {
         );
       });
     });
+
+    describe("redeemAll", () => {
+      let balance: BigNumber;
+
+      before(async () => {
+        balance = await defi5.connect(treasurySigner).balanceOf(treasury);
+      });
+
+      it("Reverts if amount is 0", async () => {
+        await expect(
+          defi5.connect(treasurySigner).exitPoolTo(wallet.address, 0)
+        ).to.be.revertedWith("ERR_NULL_AMOUNT");
+      });
+
+      it("Burns pool tokens for underlying tokens", async () => {
+        const amounts = await getAmountsOut(defi5, balance);
+        let tx = defi5
+          .connect(treasurySigner)
+          .redeemAll();
+        await validateBurn(
+          tx,
+          OLD_DEFI5_DATA,
+          defi5,
+          treasury,
+          treasury,
+          balance,
+          amounts
+        );
+      });
+    });
   });
 
   describe("CC10", () => {
@@ -620,6 +653,36 @@ describe("Drain Reversal", () => {
           treasury,
           wallet.address,
           amount,
+          amounts
+        );
+      });
+    });
+
+    describe("redeemAll", () => {
+      let balance: BigNumber;
+  
+      before(async () => {
+        balance = await cc10.connect(treasurySigner).balanceOf(treasury);
+      });
+  
+      it("Reverts if amount is 0", async () => {
+        await expect(
+          cc10.connect(treasurySigner).exitPoolTo(wallet.address, 0)
+        ).to.be.revertedWith("ERR_NULL_AMOUNT");
+      });
+  
+      it("Burns pool tokens for underlying tokens", async () => {
+        const amounts = await getAmountsOut(cc10, balance);
+        let tx = cc10
+          .connect(treasurySigner)
+          .redeemAll();
+        await validateBurn(
+          tx,
+          OLD_CC10_DATA,
+          cc10,
+          treasury,
+          treasury,
+          balance,
           amounts
         );
       });
@@ -859,6 +922,36 @@ describe("Drain Reversal", () => {
             .withArgs(FFF, wallet.address, amounts[i]);
         }
         await defi5.connect(wallet1).transfer(fff.address, fffBalance);
+      });
+    });
+
+    describe("redeemAll", () => {
+      let balance: BigNumber;
+  
+      before(async () => {
+        balance = await fff.connect(treasurySigner).balanceOf(treasury);
+      });
+  
+      it("Reverts if amount is 0", async () => {
+        await expect(
+          fff.connect(treasurySigner).exitPoolTo(wallet.address, 0)
+        ).to.be.revertedWith("ERR_NULL_AMOUNT");
+      });
+  
+      it("Burns pool tokens for underlying tokens", async () => {
+        const amounts = await getAmountsOut(fff, balance);
+        let tx = fff
+          .connect(treasurySigner)
+          .redeemAll();
+        await validateBurn(
+          tx,
+          OLD_FFF_DATA,
+          fff,
+          treasury,
+          treasury,
+          balance,
+          amounts
+        );
       });
     });
   });

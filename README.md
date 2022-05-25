@@ -1,5 +1,7 @@
 # Drain Reversal
 
+## Context
+
 In November 2021, the Indexed DAO passed governance proposal 16 to drain the DEFI5, CC10 and FFF index pools of all their ERC20 tokens, drain the ETH from their Uniswap markets and drain the sidechain markets on Polygon.
 
 For each index pool, the following steps were executed:
@@ -47,13 +49,32 @@ No contracts other than staking pools hold more than a thousandth of an LP token
 - Transfers WETH to the LP Burn contract.
 - Initializes the index pools.
 
-## Proposal
+## Proposals
 
 We will need two proposals to reverse the drain.
 
 Proposal #1 will transfer 10 of the 14 assets to the token redistributor.
 
 Proposal #2 will transfer the other 4 assets to the token redistributor, then update the core and sigma index pool implementations to the two fallthrough contracts, then call the `restoreBalances()` function on the token redistributor. 
+
+## Asset Recovery
+
+Once the proposals are executed, the index pools' implementation contracts will be switched to SigmaFalTthrough or CoreFallThrough, which will delegate to the RestrictedIndexPool contract for DEFI5, FFF and CC10. Anyone who held any of the affected assets at the time of the drain will be able to recover the underlying tokens with the functions below.
+
+**LP Tokens**
+
+anyone holding LP tokens for one of the Uniswap pairs will be able to redeem their assets by calling the appropriate function on the UniBurn contract:
+- `redeemFFFLP()` for FFF LP tokens.
+- `redeemDEFI5LP()` for DEFI5 LP tokens.
+- `redeemCC10LP()` for CC10 LP tokens.
+
+**Index Pools**
+
+`exitPool` - Same as original exitPool. Caller can specify minimum amounts out.
+
+`exitPoolTo` - Burns provided amount of index pool token and redeems proportional amounts of each underlying asset to a provided address.
+
+`redeemAll` - Burns caller's entire balance and transfers proportional amounts of each underlying asset to them.
 
 ## Scripts
 

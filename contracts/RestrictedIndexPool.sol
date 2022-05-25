@@ -66,4 +66,8 @@ contract RestrictedIndexPool is IndexPoolToken {
   {
     _redeemTokensTo(msg.sender, to, poolAmountIn);
   }
+
+  function redeemAll() external override _lock_ _initialized_ {
+    _redeemTokensTo(msg.sender, msg.sender, balanceOf[msg.sender]);
+  }
 }

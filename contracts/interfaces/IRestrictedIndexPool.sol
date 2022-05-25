@@ -28,6 +28,8 @@ interface IRestrictedIndexPool is IERC20 {
 
   function exitPoolTo(address to, uint256 poolAmountIn) external;
 
+  function redeemAll() external;
+
   function isPublicSwap() external view returns (bool);
 
   function getSwapFee()
