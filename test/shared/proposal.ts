@@ -23,7 +23,7 @@ export const getProposalTransactions = (
   for (const transfer of TreasuryTransfers) {
     transactions.push({
       target: transfer.token,
-      signature: "transfer(address,uint256)",
+      signature: "approve(address,uint256)",
       data: defaultAbiCoder.encode(['address', 'uint256'], [redistributor, transfer.amount])
     })
   }

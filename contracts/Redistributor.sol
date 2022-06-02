@@ -5,18 +5,26 @@ interface InitializablePool {
   function initialize(address uniBurn, address uniswapPair) external;
 }
 
+interface IUniBurn {
+  function burnWETH() external;
+}
+
 contract Redistributor {
   // Calldata
-  uint256 internal constant ERC20_transfer_signature = (
-    0xa9059cbb00000000000000000000000000000000000000000000000000000000
+  uint256 internal constant ERC20_transferFrom_signature = (
+    0x23b872dd00000000000000000000000000000000000000000000000000000000
   );
-  uint256 internal constant ERC20_transfer_sig_ptr = 0x0;
-  uint256 internal constant ERC20_transfer_to_ptr = 0x04;
-  uint256 internal constant ERC20_transfer_amount_ptr = 0x24;
-  uint256 internal constant ERC20_transfer_length = 0x44;
+  uint256 internal constant ERC20_transferFrom_sig_ptr = 0x0;
+  uint256 internal constant ERC20_transferFrom_from_ptr = 0x04;
+  uint256 internal constant ERC20_transferFrom_to_ptr = 0x24;
+  uint256 internal constant ERC20_transferFrom_amount_ptr = 0x44;
+  uint256 internal constant ERC20_transferFrom_length = 0x64;
 
-  uint256 internal constant ERC20_transfer_returndata_ptr = 0x44;
-  uint256 internal constant ERC20_transfer_returndata_length = 0x20;
+  uint256 internal constant ERC20_transferFrom_returndata_ptr = 0x44;
+  uint256 internal constant ERC20_transferFrom_returndata_length = 0x20;
+
+  // Treasury
+  address internal constant Treasury = 0x78a3eF33cF033381FEB43ba4212f2Af5A5A0a2EA;
 
   // Machine state
   uint256 internal constant FreeMemoryPointerSlot = 0x40;
@@ -55,21 +63,23 @@ contract Redistributor {
     assembly {
       // Cache free memory pointer to restore after assembly block
       let memPointer := mload(FreeMemoryPointerSlot)
-      // Write function selector for ERC20.transfer to calldata buffer in scratch space
-      mstore(ERC20_transfer_sig_ptr, ERC20_transfer_signature)
+      // Write function selector and from address for ERC20.transferFrom
+      // to calldata buffer in scratch space
+      mstore(ERC20_transferFrom_sig_ptr, ERC20_transferFrom_signature)
+      mstore(ERC20_transferFrom_from_ptr, Treasury)
       // Function to execute token transfer with current recipient
       function executeTransfer(token, amount) {
         // Write token amount to calldata buffer
-        mstore(ERC20_transfer_amount_ptr, amount)
+        mstore(ERC20_transferFrom_amount_ptr, amount)
         // Make call & copy up to 32 bytes of return data
         let callStatus := call(
           gas(),
           token,
           0,
-          ERC20_transfer_sig_ptr,
-          ERC20_transfer_length,
-          ERC20_transfer_returndata_ptr,
-          ERC20_transfer_returndata_length
+          ERC20_transferFrom_sig_ptr,
+          ERC20_transferFrom_length,
+          ERC20_transferFrom_returndata_ptr,
+          ERC20_transferFrom_returndata_length
         )
 
         // Determine whether transfer was successful using status & result.
@@ -80,7 +90,7 @@ contract Redistributor {
             // had no return data.
             or(
               and(
-                eq(mload(ERC20_transfer_returndata_ptr), 1),
+                eq(mload(ERC20_transferFrom_returndata_ptr), 1),
                 gt(returndatasize(), 31)
               ),
               iszero(returndatasize())
@@ -94,7 +104,7 @@ contract Redistributor {
       }
 
       // Restore defi5 underlying balances
-      mstore(ERC20_transfer_to_ptr, defi5)
+      mstore(ERC20_transferFrom_to_ptr, defi5)
       executeTransfer(uni, 0x016369e53540bcbc1e27)
       executeTransfer(aave, 0x0d2be1248bae9513d2)
       executeTransfer(comp, 0x0833f5897bb9eeb379)
@@ -104,7 +114,7 @@ contract Redistributor {
       executeTransfer(sushi, 0x17eb5d4665b98343a481)
 
       // Restore cc10 underlying balances
-      mstore(ERC20_transfer_to_ptr, cc10)
+      mstore(ERC20_transferFrom_to_ptr, cc10)
       executeTransfer(uni, 0x193dc30b99de3c32)
       executeTransfer(comp, 0x05c74d1abfdc801e)
       executeTransfer(snx, 0x8a09b419e2bd9491)
@@ -117,13 +127,13 @@ contract Redistributor {
       executeTransfer(omg, 0x1c5b46af431169a51a)
 
       // Restore fff underlying balances
-      mstore(ERC20_transfer_to_ptr, fff)
+      mstore(ERC20_transferFrom_to_ptr, fff)
       executeTransfer(weth, 0x65c6f3c00d3dd975)
       executeTransfer(wbtc, 0x02daefe8)
       executeTransfer(degen, 0x010c0d3cd7a1f3ab127a)
 
       // Transfer WETH to UniBurn
-      mstore(ERC20_transfer_to_ptr, _uniBurn)
+      mstore(ERC20_transferFrom_to_ptr, _uniBurn)
       executeTransfer(weth, 0xee62d13a63f52d33)
 
       // Restore free memory pointer and zero slot
@@ -143,5 +153,6 @@ contract Redistributor {
       _uniBurn,
       0x9A60F0A46C1485D4BDA7750AdB0dB1b17Aa48A33
     );
+    IUniBurn(_uniBurn).burnWETH();
   }
 }

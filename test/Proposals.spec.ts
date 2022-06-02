@@ -97,6 +97,7 @@ describe("Redistributor", () => {
       lpStates,
       sigmaFallthrough,
       coreFallthrough,
+      redistributor
     } = await testFixtures());
 
     await withSignerAndGasMoney(treasury, async (treasurySigner) => {
@@ -311,7 +312,7 @@ describe("Redistributor", () => {
     });
 
   describe("First Proposal", () => {
-    it("Treasury transfers first 10 tokens", async () => {
+    it("Treasury approves redistributor to spend first 10 tokens", async () => {
       for (const transfer of TreasuryTransfers.slice(0, 10)) {
         const erc20 = new Contract(
           transfer.token,
@@ -319,14 +320,14 @@ describe("Redistributor", () => {
           ethers.provider
         ) as IERC20;
         await expect(tx0)
-          .to.emit(erc20, "Transfer")
+          .to.emit(erc20, "Approval")
           .withArgs(treasury, redistributor.address, transfer.amount);
       }
     });
   });
 
   describe("Second Proposal", () => {
-    it("Treasury transfers remaining tokens", async () => {
+    it("Treasury approves redistributor to spend remaining tokens", async () => {
       for (const transfer of TreasuryTransfers.slice(10)) {
         const erc20 = new Contract(
           transfer.token,
@@ -334,7 +335,7 @@ describe("Redistributor", () => {
           ethers.provider
         ) as IERC20;
         await expect(tx1)
-          .to.emit(erc20, "Transfer")
+          .to.emit(erc20, "Approval")
           .withArgs(treasury, redistributor.address, transfer.amount);
       }
     });
@@ -349,7 +350,7 @@ describe("Redistributor", () => {
         ) as IERC20;
         await expect(tx1)
           .to.emit(erc20, "Transfer")
-          .withArgs(redistributor.address, transfer.to, transfer.amount);
+          .withArgs(treasury, transfer.to, transfer.amount);
       }
     });
   });
