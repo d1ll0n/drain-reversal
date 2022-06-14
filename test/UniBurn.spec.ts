@@ -16,6 +16,9 @@ import {
   CC10_DRAINED_TOKENS,
   FFF_DRAINED_TOKENS,
   testFixtures,
+  treasury,
+  impersonate,
+  createSnapshot,
 } from "./shared";
 import { PoolData, PairData, PairState } from "./data";
 
@@ -43,6 +46,7 @@ describe("UniBurn", () => {
   after(async () => await reset());
 
   before(async () => {
+    reset = await createSnapshot();
     ({
       defi5,
       cc10,
@@ -59,7 +63,8 @@ describe("UniBurn", () => {
       lpStates,
       pairDatas,
     } = await testFixtures(true, true));
-
+    await sendEtherTo(treasury);
+    treasurySigner = await impersonate(treasury);
     await sendEtherTo(UNISWAP_PAIRS.defi5);
     await sendEtherTo(UNISWAP_PAIRS.cc10);
     await sendEtherTo(UNISWAP_PAIRS.fff);
@@ -138,6 +143,7 @@ describe("UniBurn", () => {
 
     describe("redeemFFFLP", () => {
       before(async () => {
+        await sendEtherTo("0xc46e0e7ecb3efcc417f6f89b940ffaff72556382");
         await withSigner(
           "0xc46e0e7ecb3efcc417f6f89b940ffaff72556382",
           async (signer) => {
@@ -192,6 +198,7 @@ describe("UniBurn", () => {
 
     describe("redeemDEFI5LP", () => {
       before(async () => {
+        await sendEtherTo("0xc46e0e7ecb3efcc417f6f89b940ffaff72556382");
         await withSigner(
           "0xc46e0e7ecb3efcc417f6f89b940ffaff72556382",
           async (signer) => {
@@ -251,6 +258,7 @@ describe("UniBurn", () => {
 
     describe("redeemCC10LP", () => {
       before(async () => {
+        await sendEtherTo("0xc46e0e7ecb3efcc417f6f89b940ffaff72556382");
         await withSigner(
           "0xc46e0e7ecb3efcc417f6f89b940ffaff72556382",
           async (signer) => {
