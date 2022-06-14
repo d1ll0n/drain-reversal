@@ -72,7 +72,7 @@ describe("Redistributor", () => {
         weth.interface,
         treasurySigner
       ) as IERC20;
-      await erc20.transfer(redistributor.address, transfer.amount);
+      await erc20.approve(redistributor.address, transfer.amount);
       await expect(redistributor.restoreBalances()).to.be.reverted;
     }
     const lastTransfer = TreasuryTransfers.slice(-1)[0];
@@ -81,7 +81,7 @@ describe("Redistributor", () => {
       weth.interface,
       treasurySigner
     ) as IERC20;
-    await erc20.transfer(redistributor.address, lastTransfer.amount);
+    await erc20.approve(redistributor.address, lastTransfer.amount);
   });
 
   const getDrainedTokens = async (
@@ -135,7 +135,7 @@ describe("Redistributor", () => {
       ) as IERC20;
       await expect(tx)
         .to.emit(erc20, "Transfer")
-        .withArgs(redistributor.address, transfer.to, transfer.amount);
+        .withArgs(treasury, transfer.to, transfer.amount);
     }
   });
 });
